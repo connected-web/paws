@@ -1,0 +1,28 @@
+{
+  "name": "paws",
+  "version": "0.0.1",
+  "description": "Automated web-based exploration tool for interacting with key based navigation systems",
+  "main": "paws.js",
+  "scripts": {
+    "test": "mocha --recursive"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/connected-web/paws.git"
+  },
+  "keywords": [
+    "node",
+    "automated",
+    "testing",
+    "navigation",
+    "image",
+    "comparison",
+    "framework"
+  ],
+  "author": "John Beech",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/connected-web/paws/issues"
+  },
+  "homepage": "https://github.com/connected-web/paws#readme"
+}
