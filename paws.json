@@ -31,7 +31,7 @@
             "maximum": 10
         },
         "wait": {
-            "timeInSeconds": 2.5
+            "timeInSeconds": 1.5
         }
     }
 }
