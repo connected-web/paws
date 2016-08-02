@@ -1,0 +1,37 @@
+{
+    "startUrl": "http://www.bbc.co.uk/tvapp/home/?brand=default&model=webkit&config=qa&layout=720",
+    "screenshots": {
+        "path": "screenshots/home",
+        "prefix": "{#}-home-",
+        "viewport": {
+            "size": {
+                "width": 1280,
+                "height": 720
+            }
+        }
+    },
+    "navigation": {
+        "keys": [
+            "Back",
+            "Enter",
+            "Left",
+            "Up",
+            "Right",
+            "Down"
+        ],
+        "keyMap": {
+            "Back": 8,
+            "Enter": 13,
+            "Left": 37,
+            "Up": 38,
+            "Down": 40,
+            "Right": 39
+        },
+        "depth": {
+            "maximum": 10
+        },
+        "wait": {
+            "timeInSeconds": 2
+        }
+    }
+}
