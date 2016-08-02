@@ -1,5 +1,5 @@
 {
-    "startUrl": "http://www.bbc.co.uk/tvapp/home/?brand=default&model=webkit&config=qa&layout=720",
+    "startUrl": "http://www.bbc.co.uk/tvapp/home/?brand=default&model=webkit&config=qa",
     "screenshots": {
         "path": "screenshots/home",
         "prefix": "{#}-home-",
@@ -12,12 +12,12 @@
     },
     "navigation": {
         "keys": [
-            "Back",
             "Enter",
             "Left",
             "Up",
             "Right",
-            "Down"
+            "Down",
+            "Back"
         ],
         "keyMap": {
             "Back": 8,
@@ -31,7 +31,7 @@
             "maximum": 10
         },
         "wait": {
-            "timeInSeconds": 2
+            "timeInSeconds": 2.5
         }
     }
 }

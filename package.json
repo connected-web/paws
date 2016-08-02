@@ -4,7 +4,7 @@
   "description": "Automated web-based exploration tool for interacting with key based navigation systems",
   "main": "paws.js",
   "scripts": {
-    "start": "phantomjs paws.js",
+    "start": "rm -rf screenshots/**/*.png && phantomjs paws.js",
     "test": "mocha --recursive"
   },
   "repository": {
