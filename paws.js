@@ -1,15 +1,9 @@
-console.log('PAWS');
+const run = require('promise-path').run;
 
-try {
-  var config = require('./paws.json');
-  var runner = require('./lib/runner');
-
-  console.log('Config', JSON.stringify(config, null, 2));
-
-  console.log('Running...');
-
-  runner.run(config);
-
-} catch (ex) {
-  console.error(ex, ex.stack);
-}
+run(`phantomjs phantom-harness.js`)
+  .then((result) => {
+    console.log('Result', result.stdout, result.stderr);
+  })
+  .catch((ex) => {
+    console.error(ex, ex.stack);
+  });

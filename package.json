@@ -4,7 +4,7 @@
   "description": "Automated web-based exploration tool for interacting with key based navigation systems",
   "main": "paws.js",
   "scripts": {
-    "start": "rm -rf screenshots/**/*.png && phantomjs paws.js",
+    "start": "rm -rf screenshots/**/*.png && node paws.js",
     "test": "mocha --recursive"
   },
   "repository": {
@@ -28,6 +28,7 @@
   "homepage": "https://github.com/connected-web/paws#readme",
   "dependencies": {
     "casperjs": "^1.1.3",
-    "phantomjs-prebuilt": "^2.1.9"
+    "phantomjs-prebuilt": "^2.1.9",
+    "promise-path": "^1.2.3"
   }
 }
