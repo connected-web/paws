@@ -11,17 +11,17 @@
         }
     },
     "diffs": {
-      "path": "screenshots/diff/home",
-      "prefix": "{#}-home-diff-"
+        "path": "screenshots/diff",
+        "prefix": "{#}-home-diff-"
     },
     "navigation": {
         "keys": [
+            "Back",
             "Enter",
             "Left",
             "Up",
             "Right",
-            "Down",
-            "Back"
+            "Down"
         ],
         "keyMap": {
             "Back": 8,
@@ -35,7 +35,7 @@
             "maximum": 10
         },
         "wait": {
-            "timeInSeconds": 1.5
+            "timeInSeconds": 1.8
         }
     }
 }
