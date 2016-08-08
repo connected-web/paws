@@ -2,13 +2,20 @@
 
 ## Install
 
-- git clone
-- npm install
+### Prerequisites
+
+- Install ImageMagick
+- e.g. `brew install imagemagick`
+
+Node:
+
+- `git clone`
+- `npm install`
 
 ## Run
 
-- npm start
+- `npm start`
 
 ## Configure
 
-- Edit paws.json
+- Edit `paws.json`
