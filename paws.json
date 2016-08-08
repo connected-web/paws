@@ -10,6 +10,10 @@
             }
         }
     },
+    "diffs": {
+      "path": "screenshots/diff/home",
+      "prefix": "{#}-home-diff-"
+    },
     "navigation": {
         "keys": [
             "Enter",
