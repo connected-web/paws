@@ -10,7 +10,7 @@ const paths = [
 ];
 
 const renderedImagePaths = [];
-const livePaths = [];
+var livePaths = [];
 const checkedPaths = {};
 const deadPaths = {
   'start,Back,Enter': true // hack: silently breaks on this route //
