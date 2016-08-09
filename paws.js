@@ -1,18 +1,18 @@
 const run = require('promise-path').run;
+const make = require('promise-path').make;
 const imageDiff = require('image-diff');
 const options = require('./paws.json');
 const fs = require('fs');
 
 var counter = 0;
 var imagePath, previousImagePath;
-const paths = [
+var paths = [
   ['start']
 ];
-
-const renderedImagePaths = [];
+var renderedImagePaths = [];
 var livePaths = [];
-const checkedPaths = {};
-const deadPaths = {
+var checkedPaths = {};
+var deadPaths = {
   'start,Back,Enter': true // hack: silently breaks on this route //
 };
 
@@ -20,13 +20,53 @@ function zp(number) {
   return (number < 10) ? '0' + number : number;
 }
 
+function today(seperator) {
+  return new Date().toISOString().split('T')[0]
+}
+
+function readReport(next) {
+  const filepath = reportPath();
+  try {
+    var report = JSON.parse(fs.readFileSync(filepath));
+
+    renderedImagePaths = report.renderedImagePaths;
+    deadPaths = report.deadPaths;
+    checkedPaths = report.checkedPaths;
+    livePaths = report.livePaths;
+    counter = report.counter;
+
+  } catch (ex) {
+    console.log('Unable to read existing report', filepath, ex, ex.stack);
+  }
+  next();
+}
+
 function updateReport() {
-  fs.writeFile(`${options.screenshots.path}/report.json`, JSON.stringify({
+  const report = {
     renderedImagePaths,
     deadPaths,
     checkedPaths,
-    livePaths
-  }, null, 2), 'utf8');
+    livePaths,
+    counter
+  };
+  console.log('Report', report);
+  fs.writeFile(reportPath(), JSON.stringify(report, null, 2), 'utf8');
+}
+
+function reportPath() {
+  return `${options.screenshots.path}/report.json`.replace('{today}', today());
+}
+
+function chooseFirstPath() {
+  var screenshotPath = (options.screenshots.path).replace('{today}', today());
+
+  make(screenshotPath)
+    .then(() => {
+      readReport(chooseNextPath);
+    })
+    .catch((ex) => {
+      console.error('Unable to create path', screenshotPath, ex, ex.stack)
+    });
 }
 
 function chooseNextPath() {
@@ -42,11 +82,12 @@ function chooseNextPath() {
       return chooseNextPath();
     }
     imagePath = `${options.screenshots.path}/${options.screenshots.prefix}${path.join(',')}.png`
-      .replace('{#}', zp(counter));
+      .replace('{#}', zp(counter))
+      .replace('{today}', today());
 
     console.log('Rendering next route', imagePath);
 
-    return renderPath(path, function() {
+    return renderPath(path, imagePath, function() {
       previousImagePath = imagePath;
       checkedPaths[path.join(',')] = {
         imagePath
@@ -177,10 +218,10 @@ function removeDeadPath(path, reason, deadImagePath) {
   fs.unlink(__dirname + '/' + deadImagePath);
 }
 
-function renderPath(path, next) {
+function renderPath(path, screenshot, next) {
   const pathString = path.join(',');
 
-  return run(`phantomjs phantom-harness.js ${pathString} ${counter}`)
+  return run(`phantomjs phantom-harness.js ${pathString} ${counter} ${screenshot}`)
     .then((result) => {
       console.log('Result', result.stdout, result.stderr);
       next();
@@ -191,4 +232,4 @@ function renderPath(path, next) {
     });
 }
 
-chooseNextPath();
+chooseFirstPath();

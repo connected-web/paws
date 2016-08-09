@@ -1,7 +1,7 @@
 {
     "startUrl": "http://www.bbc.co.uk/tvapp/home/?brand=default&model=webkit&config=qa",
     "screenshots": {
-        "path": "screenshots/home",
+        "path": "screenshots/home/{today}",
         "prefix": "{#}-home-",
         "viewport": {
             "size": {

@@ -4,8 +4,9 @@
   "description": "Automated web-based exploration tool for interacting with key based navigation systems",
   "main": "paws.js",
   "scripts": {
-    "start": "rm -rf screenshots/**/*.png && node paws.js",
-    "test": "mocha --recursive"
+    "start": "node paws.js",
+    "test": "mocha --recursive",
+    "start:clean": "rm -rf screenshots/**/**/*.png && rm -rf screenshots/**/**/*.json && node paws.js"
   },
   "repository": {
     "type": "git",

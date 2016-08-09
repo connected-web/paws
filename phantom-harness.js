@@ -14,8 +14,9 @@ try {
   var pathString = args[1] || '';
   var path = pathString.split(',');
   var counter = parseInt(args[2]) || 0;
+  var screenshot = args[3] || false;
 
-  runner.run(config, path, counter);
+  runner.run(config, path, counter, screenshot);
 
 } catch (ex) {
   console.error(ex, ex.stack);
