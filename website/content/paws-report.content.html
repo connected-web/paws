@@ -1,3 +1,55 @@
 <h1>PAWS Report Viewer</h1>
 
-<p>TODO: Pull report path from URL, and render images</p>
+<div id="paws-report-container"></div>
+
+<script type="text/javascript">
+    $(function() {
+        var report = decodeURIComponent(getUrlParameter('report'));
+        var container = document.getElementById('paws-report-container');
+        container.innerHTML = '<paws-report data-source-url="{{report}}" refresh-time="35"></paws-report>'
+            .replace('{{report}}', report);
+
+        Component.scanForComponents(container);
+    });
+
+    function getUrlParameter(sParam) {
+        var sPageURL = window.location.search.substring(1);
+        var sURLVariables = sPageURL.split('&');
+        for (var i = 0; i < sURLVariables.length; i++) {
+            var sParameterName = sURLVariables[i].split('=');
+            if (sParameterName[0] == sParam) {
+                return sParameterName[1];
+            }
+        }
+    }
+</script>
+
+<template for="paws-report">
+    <h3>Paws Report</h3>
+    {{#each report.checkedPaths}}
+      {{#if this.dead}}
+        <!-- dead route: {{@key}} -->
+      {{else}}
+      <div class="screenshot">
+        <h4>{{@key}}</h4>
+        <a href="/{{this.imagePath}}"><img src="/{{this.imagePath}}" alt="{{@key}}"></a>
+      </div>
+      {{/if}}
+    {{/each}}
+</template>
+
+<style for="paws-report">
+paws-report > div.screenshot {
+  margin: 10px 10px;
+  display: inline-block;
+}
+paws-report > div.screenshot > a {
+  width: 400px;
+  display: inline-block;
+}
+
+paws-report > div.screenshot > a > img {
+  width: 100%;
+  height: auto;
+}
+</style>
