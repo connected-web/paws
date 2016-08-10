@@ -21,13 +21,19 @@ endpoint.render = function(req, res) {
     .then((files) => {
       const index = {};
       files.filter((filepath) => {
-        var matches = filepath.match(/screenshots\/([A-z]+)\/(\d\d\d\d-\d\d-\d\d)\/report.json/);
-        var product = matches[1];
-        if (index[product]) {
+        try {
+          var matches = filepath.match(/screenshots\/([A-z]+)\/(\d\d\d\d-\d\d-\d\d)\/report.json/);
+          var product = matches[1];
+
+          if (index[product]) {
+            return false;
+          }
+          index[product] = true;
+          return true;
+        } catch (ex) {
+          console.error('Unable to match product from filepath', filepath);
           return false;
         }
-        index[product] = true;
-        return true;
       });
 
       const products = Object.keys(index);
