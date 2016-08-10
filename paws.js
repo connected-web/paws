@@ -22,7 +22,7 @@ function zp(number) {
   return (number < 10) ? '0' + number : number;
 }
 
-function today(seperator) {
+function today() {
   return new Date().toISOString().split('T')[0]
 }
 
