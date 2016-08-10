@@ -26,6 +26,11 @@
 
 <template for="paws-report">
     <h3>Paws Report</h3>
+
+    <h3>Latest Capture</h3>
+    <p><img src="/{{this.latest}}" alt="{{this.latest}}" width="100%" height="auto"></p>
+
+    <h3>Today's Captures</h3>
     {{#each report.checkedPaths}}
       {{#if this.dead}}
         <!-- dead route: {{@key}} -->

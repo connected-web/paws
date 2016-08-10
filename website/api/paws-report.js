@@ -24,8 +24,10 @@ endpoint.render = function(req, res) {
         return JSON.parse(data);
       })
       .then((report) => {
+        const latest = report.renderedImagePaths[report.renderedImagePaths.length - 1];
         res.jsonp({
-          report
+          report,
+          latest
         });
       })
       .catch((ex) => {
