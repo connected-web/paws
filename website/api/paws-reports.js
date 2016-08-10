@@ -24,11 +24,14 @@ endpoint.render = function(req, res) {
       });
 
       const reports = dates.map((date) => {
-        return `/api/paws/report/${product}/${date}`;
+        return {
+          report: `/api/paws/report/${product}/${date}`,
+          date,
+          product
+        };
       });
 
       res.jsonp({
-        dates,
         reports
       });
     })

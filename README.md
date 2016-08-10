@@ -16,15 +16,19 @@ Install the project dependencies:
 - `git clone`
 - `npm install`
 
-## Run
+## Run PAWS
 
-To run fresh, deleting all image and report data, use:
-
-- `npm run start:clean`
-
-To resume or start a run, reusing the last state based on `report.json`, use:
+To resume or start PAWS, reusing the last state based on `report.json`, use:
 
 - `npm start`
+
+This will navigate the site, and create a daily report of images and places found.
+
+## Website
+
+PAWS comes packed with its own nodejs based website to review rendered reports and navigate screenshots. To start it up, run:
+
+- `npm run website`
 
 ## Configure
 
