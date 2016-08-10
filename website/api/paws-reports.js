@@ -20,7 +20,8 @@ endpoint.render = function(req, res) {
   find(`${process.cwd()}/screenshots/${product}/**/report.json`)
     .then((files) => {
       const dates = files.map((filepath) => {
-        return filepath.match(/.*(\d\d\d\d-\d\d-\d\d)\/report.json/)[1];
+        var matches = filepath.match(/.*(\d\d\d\d-\d\d-\d\d)\/report.json/);
+        return (matches && matches[1]) || `Unrecognised file path ${filepath}`;
       });
 
       const reports = dates.map((date) => {

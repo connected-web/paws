@@ -6,17 +6,24 @@
 
 </jumbotron>
 
-<reports data-source-url="/api/paws/reports/home"></reports>
+<products data-source-url="/api/paws/products"></products>
+
+<template for="products">
+  {{#each products}}
+    <h2>Product: {{this}}</h2>
+    <h4>Today's report: <a href="/content/paws-report?product={{this}}&amp;date=today">/content/paws-report?product={{this}}&amp;date=today</a></h4>
+
+    <reports data-source-url="/api/paws/reports/{{this}}"></reports>
+  {{/each}}
+</template>
 
 <template for="reports">
-    <h2>PAWS Reports</h3>
+    <h3>Previous reports</h3>
     {{#each reports}}
       <report product="{{product}}" report="{{report}}" date="{{date}}"></report>
     {{/each}}
 </template>
 
 <template for="report">
-    <h3>{{product}} {{date}}</h3>
-    <p>View report: <a href="/content/paws-report?report={{report}}">/content/paws-report.html?report={{report}}</a>
-    <p>Raw data: <a href="{{report}}">{{report}}</a></p>
+    <h4>{{date}}: <a href="/content/paws-report?report={{report}}">/content/paws-report.html?report={{report}}</h4>
 </template>

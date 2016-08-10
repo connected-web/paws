@@ -4,8 +4,11 @@
 
 <script type="text/javascript">
     $(function() {
-        var report = decodeURIComponent(getUrlParameter('report'));
+        var product = decodeURIComponent(getUrlParameter('product') || 'home');
+        var report = decodeURIComponent(getUrlParameter('report') || '/api/paws/report/' + product + '/today');
         var container = document.getElementById('paws-report-container');
+
+        console.log('Product', product, 'Report', report);
         container.innerHTML = '<paws-report data-source-url="{{report}}" refresh-time="35"></paws-report>'
             .replace('{{report}}', report);
 
@@ -17,7 +20,7 @@
         var sURLVariables = sPageURL.split('&');
         for (var i = 0; i < sURLVariables.length; i++) {
             var sParameterName = sURLVariables[i].split('=');
-            if (sParameterName[0] == sParam) {
+            if (sParameterName[0] === sParam) {
                 return sParameterName[1];
             }
         }
@@ -41,6 +44,8 @@
       </div>
       {{/if}}
     {{/each}}
+
+    <p>Raw data: <a href="{{data-source-url}}">{{data-source-url}}</a></p>
 </template>
 
 <style for="paws-report">

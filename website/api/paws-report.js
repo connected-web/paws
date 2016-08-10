@@ -12,9 +12,13 @@ endpoint.configure = function(config) {
   server = config.server;
 }
 
+function today() {
+  return new Date().toISOString().split('T')[0]
+}
+
 endpoint.render = function(req, res) {
 
-  const date = req.params.date;
+  const date = (req.params.date || 'today').replace('today', today());
   const product = req.params.product;
 
   if (product && date) {
