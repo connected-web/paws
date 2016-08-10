@@ -3,13 +3,15 @@ const make = require('promise-path').make;
 const imageDiff = require('image-diff');
 const options = require('./paws.json');
 const fs = require('fs');
+const path = require('path');
 
 var counter = 0;
-var imagePath, previousImagePath;
+var imagePath, scaledImagePath;
 var paths = [
   ['start']
 ];
 var renderedImagePaths = [];
+var scaledImagePaths = [];
 var livePaths = [];
 var checkedPaths = {};
 var deadPaths = {
@@ -30,6 +32,7 @@ function readReport(next) {
     var report = JSON.parse(fs.readFileSync(filepath));
 
     renderedImagePaths = report.renderedImagePaths;
+    scaledImagePaths = report.scaledImagePaths;
     deadPaths = report.deadPaths;
     checkedPaths = report.checkedPaths;
     livePaths = report.livePaths;
@@ -59,8 +62,12 @@ function reportPath() {
 
 function chooseFirstPath() {
   var screenshotPath = (options.screenshots.path).replace('{today}', today());
+  var diffPath = (options.diffs.path).replace('{today}', today());
 
   make(screenshotPath)
+    .then(() => {
+      make(diffPath)
+    })
     .then(() => {
       readReport(chooseNextPath);
     })
@@ -88,18 +95,28 @@ function chooseNextPath() {
     console.log('Rendering next route', imagePath);
 
     return renderPath(path, imagePath, function() {
-      previousImagePath = imagePath;
       checkedPaths[path.join(',')] = {
         imagePath
       };
 
       renderedImagePaths.push(imagePath);
-      if (path.length === 1) {
-        livePaths.push(path);
-        return chooseNextPath();
-      }
 
-      return compareAllImages(path, renderedImagePaths, chooseNextPath);
+      return resizeImage(imagePath)
+        .then((newImagePath) => {
+          scaledImagePath = newImagePath;
+          console.log('Resized image', imagePath, 'to', newImagePath);
+          scaledImagePaths.push(newImagePath);
+          if (path.length === 1) {
+            livePaths.push(path);
+            return chooseNextPath();
+          } else {
+            return compareAllImages(path, scaledImagePath, scaledImagePaths, chooseNextPath);
+          }
+        })
+        .catch((ex) => {
+          console.error('Unable to resize image', imagePath, ex, ex.stack);
+          return chooseNextPath();
+        });
     });
   } else {
     livePaths.forEach((livePath) => {
@@ -127,6 +144,21 @@ function chooseNextPath() {
   }
 }
 
+function resizeImage(imagePath) {
+  // ImageMagick e.g. `convert dragon.gif    -resize 50%  half_dragon.gif`
+
+  const scaleInPercentage = 10;
+  const diffPath = (options.diffs.path).replace('{today}', today());
+  const newImagePath = `${diffPath}/${path.basename(imagePath, '.png')}_${scaleInPercentage}pc.png`;
+
+  console.log('Resizing', imagePath, 'to', newImagePath, 'by', scaleInPercentage, '%');
+
+  return run(`convert ${imagePath} -resize ${scaleInPercentage}% ${newImagePath}`)
+    .then(() => {
+      return Promise.resolve(newImagePath);
+    });
+}
+
 function isCheckedPath(path) {
   const pathString = path.join(',');
   return checkedPaths[pathString];
@@ -139,17 +171,17 @@ function isDeadPath(path) {
   }, false);
 }
 
-function compareAllImages(instructionPath, renderedImagePaths, next) {
-  renderedImagePaths = [].concat(renderedImagePaths);
+function compareAllImages(instructionPath, primaryImagePath, imagePaths, next) {
+  imagePaths = [].concat(imagePaths);
 
-  console.log(`Compare all ${renderedImagePaths.length} rendered images against ${instructionPath}`);
+  console.log(`Compare all ${imagePaths.length} rendered images against ${instructionPath}`);
 
-  if (renderedImagePaths.length > 0) {
-    const imagePath = renderedImagePaths.pop();
+  if (imagePaths.length > 0) {
+    const imagePath = imagePaths.pop();
 
     // don't compare image with self
-    if (imagePath === previousImagePath) {
-      return compareAllImages(instructionPath, renderedImagePaths, next);
+    if (imagePath === primaryImagePath) {
+      return compareAllImages(instructionPath, primaryImagePath, imagePaths, next);
     }
 
     // compare specific image
@@ -159,11 +191,11 @@ function compareAllImages(instructionPath, renderedImagePaths, next) {
         console.log('Found matching existing image < 1% difference', imagePath, instructionPath, 'matched', (100 - result.percentage * 100) + '% similar');
         removeDeadPath(instructionPath, {
           matches: imagePath
-        }, previousImagePath);
+        }, primaryImagePath);
         next();
       } else {
         // compare next image
-        compareAllImages(instructionPath, renderedImagePaths, next);
+        compareAllImages(instructionPath, primaryImagePath, imagePaths, next);
       }
     });
   } else {
@@ -175,12 +207,13 @@ function compareAllImages(instructionPath, renderedImagePaths, next) {
 
 function compareImages(instructionPath, imagePath, callback) {
 
-  console.log('Compare image on path', instructionPath, 'with', imagePath, previousImagePath);
+  console.log('Compare image on path', instructionPath, 'with', imagePath, scaledImagePath);
 
-  const imagePath1 = previousImagePath;
+  const imagePath1 = scaledImagePath;
   const imagePath2 = imagePath;
+  const diffPath = (options.diffs.path).replace('{today}', today());
 
-  const diffImagePath = `${__dirname}/${options.diffs.path}/${options.diffs.prefix}${instructionPath.join(',')}.png`
+  const diffImagePath = `${__dirname}/${diffPath}/temp-diff.png`
     .replace('{#}', zp(counter));
 
   const diffOptions = {
@@ -192,7 +225,7 @@ function compareImages(instructionPath, imagePath, callback) {
   imageDiff.getFullResult(diffOptions, function(err, result) {
     // result = {total: 46340.2, difference: 0.707107}
     if (err) {
-      const errorPercentage = 50.0;
+      const errorPercentage = 0.5;
       console.error(`Image Diff Error: treating as ${errorPercentage * 100}%`, err);
       result = {
         percentage: errorPercentage
