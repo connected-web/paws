@@ -23,7 +23,7 @@ function zp(number) {
 }
 
 function today() {
-  return new Date().toISOString().split('T')[0]
+  return new Date().toISOString().split('T')[0];
 }
 
 function readReport(next) {
@@ -265,4 +265,17 @@ function renderPath(path, screenshot, next) {
     });
 }
 
+var currentDay = today();
+
+function checkDay() {
+  if (currentDay !== today()) {
+    console.log('Day has changed, exiting service to force restart');
+    process.exit(0);
+  } else {
+    const fiveMinutesInMs = 5 * 60 * 1000;
+    setTimeout(checkDay, fiveMinutesInMs);
+  }
+}
+
 chooseFirstPath();
+checkDay();
