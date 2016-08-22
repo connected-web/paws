@@ -1,7 +1,10 @@
+const productConfig = process.argv[2] || './paws.json';
+console.log('Using product config', productConfig);
+
 const run = require('promise-path').run;
 const make = require('promise-path').make;
 const imageDiff = require('image-diff');
-const options = require('./paws.json');
+const options = require(productConfig);
 const fs = require('fs');
 const path = require('path');
 
@@ -17,6 +20,8 @@ var checkedPaths = {};
 var deadPaths = {
   'start,Back,Enter': true // hack: silently breaks on this route //
 };
+
+console.log('Product options', options);
 
 function zp(number) {
   return (number < 10) ? '0' + number : number;
@@ -251,10 +256,10 @@ function removeDeadPath(path, reason, deadImagePath) {
   fs.unlink(__dirname + '/' + deadImagePath);
 }
 
-function renderPath(path, screenshot, next) {
+function renderPath(path, outputPath, next) {
   const pathString = path.join(',');
 
-  return run(`phantomjs phantom-harness.js ${pathString} ${counter} ${screenshot}`)
+  return run(`phantomjs phantom-harness.js ${productConfig} ${pathString} ${outputPath}`)
     .then((result) => {
       console.log('Result', result.stdout, result.stderr);
       next();

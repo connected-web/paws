@@ -1,8 +1,8 @@
 {
     "startUrl": "http://www.mywebapp.co.uk/app/launch/",
     "screenshots": {
-        "path": "screenshots/home/{today}",
-        "prefix": "{#}-home-",
+        "path": "screenshots/myapp/{today}",
+        "prefix": "{#}-myapp-",
         "viewport": {
             "size": {
                 "width": 1280,
@@ -11,8 +11,8 @@
         }
     },
     "diffs": {
-        "path": "screenshots/diff/{today}",
-        "prefix": "{#}-home-diff-"
+        "path": "screenshots/myapp/diff/{today}",
+        "prefix": "{#}-diff-"
     },
     "navigation": {
         "keys": [
