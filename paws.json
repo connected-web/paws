@@ -1,5 +1,5 @@
 {
-    "startUrl": "http://www.bbc.co.uk/tvapp/home/?brand=default&model=webkit&config=qa",
+    "startUrl": "http://www.mywebapp.co.uk/app/launch/",
     "screenshots": {
         "path": "screenshots/home/{today}",
         "prefix": "{#}-home-",
