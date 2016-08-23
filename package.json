@@ -4,7 +4,7 @@
   "description": "Automated web-based exploration tool for interacting with key based navigation systems",
   "main": "paws.js",
   "scripts": {
-    "start": "node paws.js",
+    "start": "node paws-multiconfig-mode.js",
     "test": "mocha --recursive",
     "website": "node website.js"
   },

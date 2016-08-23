@@ -1,4 +1,6 @@
-# paws
+# PAWS
+
+PAWS is an automated screenshot gathering tool, that can navigate a web application or game by pressing a set of keys in a sequential order. It explores an app by building up valid routes, checking at each stage to see if it has returned to an existing visual state.
 
 ## Install
 
@@ -18,11 +20,22 @@ Install the project dependencies:
 
 ## Run PAWS
 
-To resume or start PAWS, reusing the last state based on `report.json`, use:
+Note: PAWS will attempt to resume from its previous state based on the last `report.json`.
 
+To run in multi-config mode, use:
 - `npm start`
 
-This will navigate the site, and create a daily report of images and places found.
+This will scan the `products` folder for JSON files to run PAWS against.
+
+PAWS will then navigate the site, and create a daily report of images and places found.
+
+## Run a specific config
+
+- `node paws.js products/myapp.json`
+
+## Render a specific journey
+
+- `phantomjs phantom-harness.js ./products/myapp.json Enter,Down,Up outfile.png`
 
 ## Website
 
