@@ -1,4 +1,5 @@
 {
+    "name": "MyApp",
     "startUrl": "http://www.mywebapp.co.uk/app/launch/",
     "screenshots": {
         "path": "screenshots/myapp/{today}",
