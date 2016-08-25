@@ -29,23 +29,9 @@
 </script>
 
 <template for="paws-report">
-    <h3>Paws Report for {{product}}</h3>
+    <h3>Latest capture for {{product}}</h3>
 
-    <h3>Latest Capture</h3>
     <p><img src="/{{this.latest}}" alt="{{this.latest}}" width="100%" height="auto"></p>
-    <p><a href="/content/paws-report-latest?product={{product}}">View latest {{product}} capture standalone</a></p>
-
-    <h3>Today's Captures</h3>
-    {{#each report.checkedPaths}}
-      {{#if this.dead}}
-        <!-- dead route: {{@key}} -->
-      {{else}}
-      <div class="screenshot">
-        <h4>{{@key}}</h4>
-        <a href="/{{this.imagePath}}"><img src="/{{this.imagePath}}" alt="{{@key}}"></a>
-      </div>
-      {{/if}}
-    {{/each}}
 
     <p>Raw data: <a href="{{data-source-url}}">{{data-source-url}}</a></p>
 </template>

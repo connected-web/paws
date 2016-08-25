@@ -3,3 +3,5 @@ node_modules
 screenshots
 ssh
 products/*.json
+.DS_Store
+
