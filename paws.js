@@ -3,6 +3,7 @@ console.log('Using product config', productConfig);
 
 const run = require('promise-path').run;
 const make = require('promise-path').make;
+const write = require('promise-path').write;
 const imageDiff = require('image-diff');
 const options = require(productConfig);
 const fs = require('fs');
@@ -36,12 +37,12 @@ function readReport(next) {
   try {
     var report = JSON.parse(fs.readFileSync(filepath));
 
-    renderedImagePaths = report.renderedImagePaths;
-    scaledImagePaths = report.scaledImagePaths;
-    deadPaths = report.deadPaths;
-    checkedPaths = report.checkedPaths;
-    livePaths = report.livePaths;
-    counter = report.counter;
+    renderedImagePaths = report.renderedImagePaths || [];
+    scaledImagePaths = report.scaledImagePaths || [];
+    livePaths = report.livePaths || [];
+    checkedPaths = report.checkedPaths || {};
+    deadPaths = report.deadPaths || {};
+    counter = report.counter || 0;
 
   } catch (ex) {
     console.log('Unable to read existing report', filepath, ex, ex.stack);
@@ -58,7 +59,7 @@ function updateReport() {
     counter
   };
   console.log('Report', report);
-  fs.writeFile(reportPath(), JSON.stringify(report, null, 2), 'utf8');
+  return write(reportPath(), JSON.stringify(report, null, 2), 'utf8');
 }
 
 function reportPath() {
@@ -83,70 +84,72 @@ function chooseFirstPath() {
 
 function chooseNextPath() {
 
-  updateReport();
+  return updateReport()
+    .then(() => {
+      if (paths.length > 0) {
+        counter++;
+        const path = paths.shift();
 
-  if (paths.length > 0) {
-    counter++;
-    const path = paths.shift();
-
-    if (isDeadPath(path)) {
-      console.log('Skipping dead path', instructionPath);
-      return chooseNextPath();
-    }
-    imagePath = `${options.screenshots.path}/${options.screenshots.prefix}${path.join(',')}.png`
-      .replace('{#}', zp(counter))
-      .replace('{today}', today());
-
-    console.log('Rendering next route', imagePath);
-
-    return renderPath(path, imagePath, function() {
-      checkedPaths[path.join(',')] = {
-        imagePath
-      };
-
-      renderedImagePaths.push(imagePath);
-
-      return resizeImage(imagePath)
-        .then((newImagePath) => {
-          scaledImagePath = newImagePath;
-          console.log('Resized image', imagePath, 'to', newImagePath);
-          scaledImagePaths.push(newImagePath);
-          if (path.length === 1) {
-            livePaths.push(path);
-            return chooseNextPath();
-          } else {
-            return compareAllImages(path, scaledImagePath, scaledImagePaths, chooseNextPath);
-          }
-        })
-        .catch((ex) => {
-          console.error('Unable to resize image', imagePath, ex, ex.stack);
-          return chooseNextPath();
-        });
-    });
-  } else {
-    livePaths.forEach((livePath) => {
-      options.navigation.keys.forEach((key) => {
-        const path = [].concat(livePath, key);
         if (isDeadPath(path)) {
-          console.log('Skipping dead path', path);
-        } else if (isCheckedPath(path)) {
-          console.log('Skipping checked path', path);
-        } else {
-          console.log('Generated new path', path);
-          paths.push(path)
+          console.log('Skipping dead path', instructionPath);
+          return chooseNextPath();
         }
-      });
-    });
-    livePaths = [];
+        imagePath = `${options.screenshots.path}/${options.screenshots.prefix}${path.join(',')}.png`
+          .replace('{#}', zp(counter))
+          .replace('{today}', today());
 
-    if (paths.length > 0) {
-      console.log('Generated ' + paths.length + ' new paths');
-      chooseNextPath();
-    } else {
-      console.log('No more paths to render');
-      console.log('Dead paths', deadPaths);
-    }
-  }
+        console.log('Rendering next route', imagePath);
+
+        return renderPath(path, imagePath, function() {
+          checkedPaths[path.join(',')] = {
+            imagePath
+          };
+
+          renderedImagePaths.push(imagePath);
+
+          return resizeImage(imagePath)
+            .then((newImagePath) => {
+              scaledImagePath = newImagePath;
+              console.log('Resized image', imagePath, 'to', newImagePath);
+              scaledImagePaths.push(newImagePath);
+              if (path.length === 1) {
+                livePaths.push(path);
+                return chooseNextPath();
+              } else {
+                return compareAllImages(path, scaledImagePath, scaledImagePaths, chooseNextPath);
+              }
+            })
+            .catch((ex) => {
+              console.error('Unable to resize image', imagePath, ex, ex.stack);
+              return chooseNextPath();
+            });
+        });
+      } else {
+        livePaths.forEach((livePath) => {
+          options.navigation.keys.forEach((key) => {
+            const path = [].concat(livePath, key);
+            if (isDeadPath(path)) {
+              console.log('Skipping dead path', path);
+            } else if (isCheckedPath(path)) {
+              console.log('Skipping checked path', path);
+            } else {
+              console.log('Generated new path', path);
+              paths.push(path)
+            }
+          });
+        });
+        livePaths = [];
+
+        if (paths.length > 0) {
+          console.log('Generated ' + paths.length + ' new paths');
+          return chooseNextPath();
+        } else {
+          console.log('No more paths to render');
+          console.log('Dead paths', deadPaths);
+          return Promise.accept({deadPaths});
+        }
+      }
+    });
 }
 
 function resizeImage(imagePath) {
