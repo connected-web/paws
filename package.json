@@ -1,12 +1,12 @@
 {
   "name": "paws",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Automated web-based exploration tool for interacting with key based navigation systems",
   "main": "paws.js",
   "scripts": {
-    "start": "node paws-multiconfig-mode.js",
+    "start": "pm2 start paws-start.js --name=PAWS",
     "test": "mocha --recursive",
-    "website": "node website.js"
+    "website": "pm2 start paws-website.js --name=\"PAWS Website\""
   },
   "repository": {
     "type": "git",
