@@ -125,7 +125,7 @@ function monitor(options) {
       });
     }
     if (queue.length > 0) {
-      console.log('Queuing items from schedule:', options.name, 'Queue length', queue.length, 'Time slot', timeSlot);
+      console.log('\nQueuing items from schedule:', options.name, 'Queue length', queue.length, 'Time slot', timeSlot);
       return updateReport();
     }
     return Promise.resolve(true);
@@ -138,7 +138,7 @@ function monitor(options) {
       var nextItem = queue.shift();
       var pathConfig = options.paths[nextItem.index];
       var url = pathConfig.url;
-      var path = outputPath(`${options.output.prefix}snapshot`);
+      var path = outputPath(`${options.output.prefix}${pathConfig.prefix}`);
       console.log('Renderering URL', url, ':', path);
       renderUrl(url, path, (error) => {
         if (error) {
@@ -151,12 +151,14 @@ function monitor(options) {
         updateReport()
         queueItemsFromSchedule()
           .then(() => {
+            process.stdout.write(' .');
             setTimeout(processQueue, 1000);
           })
           .catch(handleError);
       });
     } else {
       setTimeout(() => {
+        process.stdout.write(' :');
         queueItemsFromSchedule()
           .then(processQueue)
           .catch(handleError);
