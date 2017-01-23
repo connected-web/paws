@@ -1,0 +1,25 @@
+{
+    "name": "Example",
+    "folder": "example",
+    "paths": [{
+        "name": "BBC News",
+        "prefix": "bbc-news",
+        "url": "http://www.bbc.co.uk/news/",
+        "schedule": "every 2 minutes"
+    }],
+    "output": {
+        "path": "snapshots/{folder}/{today}",
+        "prefix": "{time}-",
+        "viewport": {
+            "size": {
+                "width": 800,
+                "height": false
+            }
+        },
+        "savePDF": true,
+        "savePNG": true
+    },
+    "wait": {
+        "timeInSeconds": 3.1
+    }
+}
