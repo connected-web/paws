@@ -8,7 +8,9 @@ Promise.accept(console.log('Start PAWS'))
   })
   .then((paths) => {
     return paths.map((path) => {
-      return require(`./${path}`);
+      const options = require(`./${path}`);
+      options.source = path;
+      return options;
     });
   })
   .then((configs) => {
