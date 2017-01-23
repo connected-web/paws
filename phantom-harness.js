@@ -10,12 +10,10 @@ try {
   // console.log('Running...');
 
   var pawsConfig = require(args[1] || 'paws.json');
-  var pathString = args[2] || '';
+  var url = args[2] || '';
   var outputPath = args[3] || 'false';
 
-  var keyPath = pathString.split(',');
-
-  runner.run(pawsConfig, keyPath, outputPath);
+  runner.run(pawsConfig, url, outputPath);
 
 } catch (ex) {
   console.error(ex, ex.stack);

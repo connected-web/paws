@@ -1,289 +1,183 @@
-const productConfig = process.argv[2] || './paws.json';
-console.log('Using product config', productConfig);
-
 const run = require('promise-path').run;
 const make = require('promise-path').make;
 const write = require('promise-path').write;
-const imageDiff = require('image-diff');
-const options = require(productConfig);
 const fs = require('fs');
 const path = require('path');
 
-var counter = 0;
-var imagePath, scaledImagePath;
-var paths = [
-  ['start']
-];
-var renderedImagePaths = [];
-var scaledImagePaths = [];
-var livePaths = [];
-var checkedPaths = {};
-var deadPaths = {
-  'start,Back,Enter': true // hack: silently breaks on this route //
+const today = require('./lib/today');
+const zp = require('./lib/zeropad');
+const timePeriod = require('./lib/timePeriod');
+
+const SCHEDULE = {
+  ITEM: {
+    INITIALISED: 'i',
+    QUEUED: 'q',
+    COMPLETED: 'c',
+    ERRORED: 'x'
+  }
 };
 
-console.log('Product options', options);
+function monitor(options) {
 
-function zp(number) {
-  return (number < 10) ? '0' + number : number;
-}
+  console.log('Configuring for product', options);
 
-function today() {
-  return new Date().toISOString().split('T')[0];
-}
+  const dateAtStart = today();
 
-function readReport(next) {
-  const filepath = reportPath();
-  try {
-    var report = JSON.parse(fs.readFileSync(filepath));
+  var snapshots = [];
+  var schedule = {};
+  var queue = [];
 
-    renderedImagePaths = report.renderedImagePaths || [];
-    scaledImagePaths = report.scaledImagePaths || [];
-    livePaths = report.livePaths || [];
-    checkedPaths = report.checkedPaths || {};
-    deadPaths = report.deadPaths || {};
-    counter = report.counter || 0;
-
-  } catch (ex) {
-    console.log('Unable to read existing report', filepath, ex, ex.stack);
+  function reportPath() {
+    return outputPath('report.json');
   }
-  next();
-}
 
-function updateReport() {
-  const report = {
-    renderedImagePaths,
-    deadPaths,
-    checkedPaths,
-    livePaths,
-    counter
-  };
-  console.log('Report', report);
-  return write(reportPath(), JSON.stringify(report, null, 2), 'utf8');
-}
+  function outputPath(fileName) {
+    return `${options.output.path}/${fileName}`
+      .replace('{today}', dateAtStart) // requires daily restart to reset, see checkDay
+      .replace('{folder}', options.folder)
+      .replace('{time}', timeTodayInSeconds());
+  }
 
-function reportPath() {
-  return `${options.screenshots.path}/report.json`.replace('{today}', today());
-}
+  function readReport(next) {
+    const filepath = reportPath();
+    try {
+      const report = JSON.parse(fs.readFileSync(filepath));
 
-function chooseFirstPath() {
-  var screenshotPath = (options.screenshots.path).replace('{today}', today());
-  var diffPath = (options.diffs.path).replace('{today}', today());
+      snapshots = report.snapshots || [];
+      schedule = report.schedule || {};
+      queue = report.queue || [];
 
-  make(screenshotPath)
-    .then(() => {
-      make(diffPath)
-    })
-    .then(() => {
-      readReport(chooseNextPath);
-    })
-    .catch((ex) => {
-      console.error('Unable to create path', screenshotPath, ex, ex.stack)
-    });
-}
-
-function chooseNextPath() {
-
-  return updateReport()
-    .then(() => {
-      if (paths.length > 0) {
-        counter++;
-        const path = paths.shift();
-
-        if (isDeadPath(path)) {
-          console.log('Skipping dead path', instructionPath);
-          return chooseNextPath();
-        }
-        imagePath = `${options.screenshots.path}/${options.screenshots.prefix}${path.join(',')}.png`
-          .replace('{#}', zp(counter))
-          .replace('{today}', today());
-
-        console.log('Rendering next route', imagePath);
-
-        return renderPath(path, imagePath, function() {
-          checkedPaths[path.join(',')] = {
-            imagePath
-          };
-
-          renderedImagePaths.push(imagePath);
-
-          return resizeImage(imagePath)
-            .then((newImagePath) => {
-              scaledImagePath = newImagePath;
-              console.log('Resized image', imagePath, 'to', newImagePath);
-              scaledImagePaths.push(newImagePath);
-              if (path.length === 1) {
-                livePaths.push(path);
-                return chooseNextPath();
-              } else {
-                return compareAllImages(path, scaledImagePath, scaledImagePaths, chooseNextPath);
-              }
-            })
-            .catch((ex) => {
-              console.error('Unable to resize image', imagePath, ex, ex.stack);
-              return chooseNextPath();
-            });
-        });
-      } else {
-        livePaths.forEach((livePath) => {
-          options.navigation.keys.forEach((key) => {
-            const path = [].concat(livePath, key);
-            if (isDeadPath(path)) {
-              console.log('Skipping dead path', path);
-            } else if (isCheckedPath(path)) {
-              console.log('Skipping checked path', path);
-            } else {
-              console.log('Generated new path', path);
-              paths.push(path)
-            }
-          });
-        });
-        livePaths = [];
-
-        if (paths.length > 0) {
-          console.log('Generated ' + paths.length + ' new paths');
-          return chooseNextPath();
-        } else {
-          console.log('No more paths to render');
-          console.log('Dead paths', deadPaths);
-          return Promise.accept({deadPaths});
-        }
-      }
-    });
-}
-
-function resizeImage(imagePath) {
-  // ImageMagick e.g. `convert dragon.gif    -resize 50%  half_dragon.gif`
-
-  const scaleInPercentage = 10;
-  const diffPath = (options.diffs.path).replace('{today}', today());
-  const newImagePath = `${diffPath}/${path.basename(imagePath, '.png')}_${scaleInPercentage}pc.png`;
-
-  console.log('Resizing', imagePath, 'to', newImagePath, 'by', scaleInPercentage, '%');
-
-  return run(`convert ${imagePath} -resize ${scaleInPercentage}% ${newImagePath}`)
-    .then(() => {
-      return Promise.resolve(newImagePath);
-    });
-}
-
-function isCheckedPath(path) {
-  const pathString = path.join(',');
-  return checkedPaths[pathString];
-}
-
-function isDeadPath(path) {
-  const pathString = path.join(',');
-  return Object.keys(deadPaths).reduce((accumulator, deadPath) => {
-    return accumulator || pathString.indexOf(deadPath) === 0;
-  }, false);
-}
-
-function compareAllImages(instructionPath, primaryImagePath, imagePaths, next) {
-  imagePaths = [].concat(imagePaths);
-
-  console.log(`Compare all ${imagePaths.length} rendered images against ${instructionPath}`);
-
-  if (imagePaths.length > 0) {
-    const imagePath = imagePaths.pop();
-
-    // don't compare image with self
-    if (imagePath === primaryImagePath) {
-      return compareAllImages(instructionPath, primaryImagePath, imagePaths, next);
+    } catch (ex) {
+      console.log('Unable to read existing report', filepath); //, ex, ex.stack);
     }
-
-    // compare specific image
-    compareImages(instructionPath, imagePath, function(result) {
-      if (result.percentage < 0.01) {
-        // found a match
-        console.log('Found matching existing image < 1% difference', imagePath, instructionPath, 'matched', (100 - result.percentage * 100) + '% similar');
-        removeDeadPath(instructionPath, {
-          matches: imagePath
-        }, primaryImagePath);
-        next();
-      } else {
-        // compare next image
-        compareAllImages(instructionPath, primaryImagePath, imagePaths, next);
-      }
-    });
-  } else {
-    console.log(`Didn't find any image matches, path is still live`);
-    livePaths.push(instructionPath);
     next();
   }
-}
 
-function compareImages(instructionPath, imagePath, callback) {
-
-  console.log('Compare image on path', instructionPath, 'with', imagePath, scaledImagePath);
-
-  const imagePath1 = scaledImagePath;
-  const imagePath2 = imagePath;
-  const diffPath = (options.diffs.path).replace('{today}', today());
-
-  const diffImagePath = `${__dirname}/${diffPath}/temp-diff.png`
-    .replace('{#}', zp(counter));
-
-  const diffOptions = {
-    actualImage: imagePath1,
-    expectedImage: imagePath2,
-    diffImage: diffImagePath,
-  };
-
-  imageDiff.getFullResult(diffOptions, function(err, result) {
-    // result = {total: 46340.2, difference: 0.707107}
-    if (err) {
-      const errorPercentage = 0.5;
-      console.error(`Image Diff Error: treating as ${errorPercentage * 100}%`, err);
-      result = {
-        percentage: errorPercentage
-      };
-    } else {
-      console.log('Image Diff Result', result);
-      console.log('Percentage', result.percentage * 100 + '%');
-    }
-
-    return callback && callback(result);
-  });
-}
-
-function removeDeadPath(path, reason, deadImagePath) {
-  console.log('Marking dead path:', path, reason);
-  console.log(':skull: Dead paths now at', Object.keys(deadPaths).length, 'of', renderedImagePaths.length);
-  const pathString = path.join(',');
-  deadPaths[pathString] = reason;
-  checkedPaths[pathString].dead = reason;
-  renderedImagePaths.filter((imagePath) => {
-    return imagePath === deadImagePath;
-  });
-  fs.unlink(__dirname + '/' + deadImagePath);
-}
-
-function renderPath(path, outputPath, next) {
-  const pathString = path.join(',');
-
-  return run(`phantomjs phantom-harness.js ${productConfig} ${pathString} ${outputPath}`)
-    .then((result) => {
-      console.log('Result', result.stdout, result.stderr);
-      next();
-    })
-    .catch((ex) => {
-      console.error(ex, ex.stack);
-      next();
-    });
-}
-
-var currentDay = today();
-
-function checkDay() {
-  if (currentDay !== today()) {
-    console.log('Day has changed, exiting service to force restart');
-    process.exit(0);
-  } else {
-    const fiveMinutesInMs = 5 * 60 * 1000;
-    setTimeout(checkDay, fiveMinutesInMs);
+  function updateReport() {
+    const report = {
+      snapshots,
+      schedule,
+      queue
+    };
+    return write(reportPath(), JSON.stringify(report, null, 2), 'utf8');
   }
+
+  function renderUrl(url, outputPath, next) {
+    const pathString = path.join(',');
+    const productConfig = `${__dirname}/${options.source}`;
+
+    const renderCommand = `phantomjs phantom-harness.js ${productConfig} ${url} ${outputPath}`;
+    console.log('Rendering', renderCommand);
+    return run(renderCommand)
+      .then((result) => {
+        console.log('Result', result.stdout, result.stderr);
+        next();
+      })
+      .catch((ex) => {
+        console.error(ex, ex.stack);
+        next(ex);
+      });
+  }
+
+  function populateSchedule() {
+    const limit = timePeriod('only 1 day').frequencyInSeconds;
+
+    options.paths.forEach((item, itemIndex) => {
+      const frequency = timePeriod(item.schedule);
+      if (frequency.frequencyInSeconds >= 60) {
+        var time = 0;
+        while (time < limit) {
+          schedule[time] = schedule[time] || {};
+          schedule[time][itemIndex] = schedule[time][itemIndex] || SCHEDULE.ITEM.INITIALISED;
+          time = time + frequency.frequencyInSeconds;
+        }
+      } else {
+        throw 'Scheduled frequency is set too low; must be greater than or equal to 60 seconds';
+      }
+    });
+
+    return updateReport();
+  }
+
+  function timeTodayInSeconds() {
+    var dayStart = new Date();
+    dayStart.setHours(0);
+    dayStart.setMinutes(0);
+    dayStart.setSeconds(0);
+
+    var now = new Date();
+    return Math.round((now.getTime() - dayStart.getTime()) / 1000);
+  }
+
+  function queueItemsFromSchedule() {
+    const frequencyInSeconds = 60;
+    var timeSlot = Math.floor(timeTodayInSeconds() / frequencyInSeconds) * frequencyInSeconds;
+    var item = schedule[timeSlot];
+    if (item) {
+      Object.keys(item).forEach((key) => {
+        if (item[key] === SCHEDULE.ITEM.INITIALISED) {
+          item[key] = SCHEDULE.ITEM.QUEUED;
+          queue.push({
+            time: timeSlot,
+            index: key
+          });
+        }
+      });
+    }
+    if (queue.length > 0) {
+      console.log('\nQueuing items from schedule:', options.name, 'Queue length', queue.length, 'Time slot', timeSlot);
+      return updateReport();
+    }
+    return Promise.resolve(true);
+  }
+
+  function processQueue() {
+    // do things
+    // then processQueue
+    if (queue.length > 0) {
+      var nextItem = queue.shift();
+      var pathConfig = options.paths[nextItem.index];
+      var url = pathConfig.url;
+      var path = outputPath(`${options.output.prefix}${pathConfig.prefix}`);
+      console.log('Renderering URL', url, ':', path);
+      renderUrl(url, path, (error) => {
+        if (error) {
+          handleError(error);
+          schedule[nextItem.time][nextItem.index] = SCHEDULE.ITEM.ERRORED;
+        } else {
+          console.log('Completed render on', options.name, url);
+          schedule[nextItem.time][nextItem.index] = SCHEDULE.ITEM.COMPLETED;
+        }
+        updateReport()
+        queueItemsFromSchedule()
+          .then(() => {
+            process.stdout.write(' .');
+            setTimeout(processQueue, 1000);
+          })
+          .catch(handleError);
+      });
+    } else {
+      setTimeout(() => {
+        process.stdout.write(' :');
+        queueItemsFromSchedule()
+          .then(processQueue)
+          .catch(handleError);
+      }, 5000);
+    }
+  }
+
+  return readReport(() => {
+    populateSchedule()
+      .then(queueItemsFromSchedule)
+      .then(processQueue)
+      .catch(handleError);
+  });
 }
 
-chooseFirstPath();
-checkDay();
+function handleError(ex) {
+  console.error('Unable to process queue', ex, ex.stack);
+}
+
+module.exports = {
+  monitor
+};
