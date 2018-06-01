@@ -46,3 +46,7 @@ PAWS comes packed with its own nodejs based website to review rendered reports a
 ## Configure
 
 - Edit `paws.json`
+
+## License
+
+PAWS is available using the [ISC license](https://en.wikipedia.org/wiki/ISC_license).</a>
