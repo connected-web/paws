@@ -2,7 +2,7 @@ const find = require('promise-path').find;
 const today = require('./lib/today')
 const paws = require('./paws');
 
-Promise.accept(console.log('Start PAWS'))
+Promise.resolve(console.log('Start PAWS'))
   .then(() => {
     return find('products/*.json');
   })

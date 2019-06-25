@@ -4,7 +4,7 @@
   "description": "Automated web-based exploration tool for interacting with key based navigation systems",
   "main": "paws.js",
   "scripts": {
-    "start": "pm2 start paws-start.js --name=PAWS",
+    "start": "node paws-start.js --name=PAWS",
     "test": "mocha --recursive",
     "website": "pm2 start paws-website.js --name=\"PAWS Website\""
   },
